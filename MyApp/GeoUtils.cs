@@ -8,9 +8,9 @@ namespace GeoUtils
         public double y = 0;
         public Point(double x = 0.0, double y = 0.0)
         {
-            this.setLoc(x, y);
+            this.setPose(x, y);
         }
-        public void setLoc(double x, double y)
+        public void setPose(double x, double y)
         {
             this.x = x;
             this.y = y;
@@ -43,31 +43,44 @@ namespace GeoUtils
     }
 
 
-    public class Anchor
+    public class Pose
     {
-        // 锚点的参数(x,y,a)
-        // 其实anchor又是一个Point和一个double
+        // 位置（和方向/角度）的参数(x,y,a)
+        // Pose = Location + Orientation
+        // pose = loc + angle
+
+        // properties
         public Point loc = new Point();
+        private double _angle = 0.0, _cosa = 1, _sina = 0;
         public double angle
         {
             get
             {
-                return angle;
+                return _angle;
             }
             set
             {
-                angle = value;
-                this.cosa = Math.Cos(this.angle / 180 * Math.PI);
-                this.sina = Math.Sin(this.angle / 180 * Math.PI);
+                _angle = value;
+                _cosa = Math.Cos(value / 180 * Math.PI);
+                _sina = Math.Sin(value / 180 * Math.PI);
             }
         }
-        private double cosa = 1, sina = 0;
-        public Anchor(Point loc, double angle = 0)
+
+        // methods
+        public Pose(Point loc, double angle = 0.0)
+        {
+            this.setPose(loc,angle);
+        }
+        public Pose(double loc_x=0.0, double loc_y=0.0, double angle=0.0)
+        {
+            this.setPose(loc_x,loc_y,angle);
+        }
+        public void setPose(Point loc, double angle = 0.0)
         {
             this.loc = loc;
             this.angle = angle;
         }
-        public Anchor(double loc_x=0, double loc_y=0, double angle=0)
+        public void setPose(double loc_x=0.0, double loc_y=0.0, double angle=0.0)
         {
             // 允许通过基本数据定义
             this.loc = new Point(loc_x, loc_y);
@@ -77,14 +90,14 @@ namespace GeoUtils
         {
             // 将原始坐标转换为相对此位置的相对坐标
             p = p - this.loc;
-            p.setLoc(p.x * this.cosa + p.y * this.sina, -p.x * this.sina + p.y * this.cosa);
+            p.setPose(p.x * this._cosa + p.y * this._sina, -p.x * this._sina + p.y * this._cosa);
             return p;
         }
 
         public Point toOriginalCoordinate(Point p)
         {
             // 将相对坐标转换到原始坐标
-            p.setLoc(p.x * this.cosa - p.y * this.sina, p.x * this.sina + p.y * this.cosa);
+            p.setPose(p.x * this._cosa - p.y * this._sina, p.x * this._sina + p.y * this._cosa);
             p = p + this.loc;
             return p;
         }

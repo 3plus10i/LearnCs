@@ -1,4 +1,3 @@
-using System;
 using GeoUtils;
 
 /* 形状的参数
@@ -11,50 +10,65 @@ namespace Shapes
 {
     public class Rectangle
     {
+        // properties
+
+        // form parameters
+        private double _w=0.0, _h=0.0;
         public double w
         {
             get
             {
-                return w;
+                return _w;
             }
             set
             {
                 if (value < 0) throw (new InvalidParameterException("Width must be positive!"));
-                w = value;
+                _w = value;
             }
         }
         public double h
         {
             get
             {
-                return h;    
+                return _h;    
             }
             set
             {
                 if (value < 0) throw (new InvalidParameterException("Height must be positive!"));
-                h = value;
+                _h = value;
             }
         }
-        public Anchor anchor = new Anchor();
+        // pose parameters
+        public Pose pose = new Pose();
 
-        public Rectangle(double width, double height, Anchor anchor)
+        // construction method: form and position
+        public Rectangle(double width, double height, Pose position)
         {
-            this.w = width;
-            this.h = height;
-            this.anchor = anchor;
+            // Form参数+Pose参数组成形状的几何描述
+            this.setForm(width, height);
+            this.pose = position;
         }
         public Rectangle(double width, double height, double loc_x = 0.0, double loc_y = 0.0, double angle = 0.0)
         {
             // 允许使用基本参数定义形状
-            this.w = width;
-            this.h = height;
-            this.anchor = new Anchor(loc_x, loc_y, angle);
+            this.setForm(width, height);
+            this.pose = new Pose(loc_x, loc_y, angle);
         }
-        public void setSize(double width, double height)
+        public void setForm(double width, double height)
         {
             // 允许同时定义所有形态参数
             this.w = width;
             this.h = height;
+        }
+        public void setPose(Point loc, double angle)
+        {
+            // 直接把Pose的set拿过来
+            this.pose.setPose(loc, angle);
+        }
+        public void setPose(double loc_x=0.0, double loc_y=0.0, double angle=0.0)
+        {
+            // 直接把Pose的set拿过来
+            this.pose.setPose(loc_x, loc_y, angle);
         }
 
         public double sdf(Point p)
@@ -63,7 +77,7 @@ namespace Shapes
 
             // 首先转换到相对坐标系（loc = (0,0,0)）
             Point loc = new Point(0.0, 0.0);
-            p = this.anchor.toRelativeCoordinate(p);
+            p = this.pose.toRelativeCoordinate(p);
 
             /* 判断点与矩形的位置关系
             分为9块区域，小键盘是个好东西
@@ -115,40 +129,41 @@ namespace Shapes
 
     public class Circle
     {
+        private double _r=0.0;
         public double r
         {
             get
             {
-                return r;
+                return _r;
             }
             set
             {
                 if (value<0) throw (new InvalidParameterException("Radius must be positave!"));
-                r = value;
+                _r = value;
             }
         }
-        public Anchor anchor = new Anchor();
+        public Pose pose = new Pose();
 
         public Circle(double radius = 1, double loc_x = 0, double loc_y = 0)
         {
-            this.setR(radius);
-            this.setLoc(loc_x,loc_y);
+            this.setForm(radius);
+            this.setPose(loc_x,loc_y);
         }
 
-        public void setR(double radius)
+        public void setForm(double radius)
         {
-            // 这种函数真的有存在的必要吗
             this.r = radius;
         }
 
-        public void setLoc(double loc_x, double loc_y)
+        public void setPose(double loc_x, double loc_y, double angle=0.0)
         {
-            this.anchor.loc = new Point(loc_x,loc_y);
+            // 圆形没有angle来着。。
+            this.pose.loc = new Point(loc_x,loc_y);
         }
 
         public double sdf(Point p)
         {
-            return MathTools.getDistance(this.anchor.loc, p) - this.r;
+            return MathTools.getDistance(this.pose.loc, p) - this.r;
         }
 
     }
